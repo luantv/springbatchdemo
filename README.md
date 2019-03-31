@@ -34,7 +34,6 @@ spring-core : 4.3.10.RELEASE, Spring framework core
 spring-batch-core: 3.0.8.RELEASE, Spring Batch core
 mysql-connector-java: 5.1.22 : Contains My SQL driver and other utility classes
 spring-jdbc: 4.3.10.RELEASE, to support the communication between Spring Batch and MySQL
-Eclipse EDI: Neon 4.6.2
 Maven :  Apache Maven 3.0.5
 
 THE JOB-PRODUCTS.XML FILE
