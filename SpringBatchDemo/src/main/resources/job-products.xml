@@ -1,0 +1,60 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch
+  http://www.springframework.org/schema/batch/spring-batch-2.2.xsd
+  http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+ ">
+
+	<import resource="spring-context.xml" />
+	<import resource="datasource.xml" />
+	<bean id="product" class="com.spring.batch.entity.Product" scope="prototype" />
+	<bean id="itemProcessor" class="com.spring.batch.ProductItemProcessor" />
+	<bean id="jobListener" class="com.spring.batch.ProductJobListener" />
+
+	<!-- Reading from the database and returning a mapper row -->
+	<bean id="productItemReader"
+		class="org.springframework.batch.item.database.JdbcCursorItemReader">
+		<property name="dataSource" ref="productDataSource" />
+		<property name="sql" value="SELECT * FROM product" />
+		<property name="rowMapper">
+			<bean class="com.spring.batch.ProductMapper" />
+		</property>
+	</bean>
+
+	<!-- Writing a line into an output flat file -->
+	<bean id="productFlatFileItemWriter"
+		class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+		<property name="resource" value="file:csv/products.csv" />
+		<!-- Converting a product object into delimited list of strings -->
+		<property name="lineAggregator">
+			<bean
+				class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+				<property name="delimiter" value="|" />
+				<property name="fieldExtractor">
+					<!-- Returning the value of beans property using reflection -->
+					<bean
+						class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+						<property name="names" value="name,unitPrice,quantity" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- And finally ... the job definition -->
+	<batch:job id="productJob">
+		<batch:step id="step1">
+			<batch:tasklet transaction-manager="transactionManager">
+				<batch:chunk reader="productItemReader"
+					writer="productFlatFileItemWriter" processor="itemProcessor"
+					commit-interval="10" />
+			</batch:tasklet>
+		</batch:step>
+		<batch:listeners>
+			<batch:listener ref="jobListener" />
+		</batch:listeners>
+	</batch:job>
+
+</beans>
